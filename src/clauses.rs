@@ -8,31 +8,36 @@ pub struct Clause {
 
 impl Clause {
     /// ```
-    /// /*let prop1 = resolution_prover::Proposition::Term("hello".to_string());
+    /// let prop1 = resolution_prover::term("hello".to_string());
     ///
-    /// let expected = resolution_prover::Clause {
+    /// let expected = vec!(resolution_prover::Clause {
     ///     parts: vec!(
     ///         resolution_prover::ClausePart::Term("hello".to_string())
     ///     )
-    /// };
+    /// });
     ///
     /// assert_eq!(
     ///     resolution_prover::Clause::from_proposition(prop1),
     ///     expected
-    /// );*/
+    /// );
     /// ```
-    pub fn from_proposition(prop: Proposition) -> Clause {
-        Clause {
-            parts: Clause::break_into_clauses(prop)
-        }
+    pub fn from_proposition(prop: Proposition) -> Vec<Clause> {
+        let all_parts = Clause::break_into_clauses(prop);
+
+        all_parts.iter()
+            .map(|parts| Clause { parts: parts.to_vec() })
+            .collect()
     }
 
-    fn break_into_clauses(prop: Proposition) -> Vec<ClausePart> {
+    fn break_into_clauses(prop: Proposition) -> Vec<Vec<ClausePart>> {
         let no_implication = Clause::eliminate_implication(prop);
         let red_negations = Clause::reduce_negation(no_implication);
-        let or_not_prop = Clause::bubble_up_ands(red_negations);
+        let bubbled = Clause::bubble_up_ands(red_negations);
+        let or_not_props = Clause::split_on_ands(bubbled);
 
-        Clause::from_or_not_prop(or_not_prop)
+        or_not_props.iter()
+            .map(|p| Clause::from_or_not_prop(p))
+            .collect()
     }
 
     fn eliminate_implication(prop: Proposition) -> Proposition {
@@ -129,28 +134,44 @@ impl Clause {
         }
     }
 
-    fn from_or_not_prop(prop: Proposition) -> Vec<ClausePart> {
+    fn split_on_ands(prop: Proposition) -> Vec<Proposition> {
         match prop {
-            Proposition::Or(a, b) => {
-                let mut a_parts = Clause::from_or_not_prop(*a);
-                let mut b_parts = Clause::from_or_not_prop(*b);
+            Proposition::And(a, b) => {
+                let mut a_parts = Clause::split_on_ands(*a);
+                let mut b_parts = Clause::split_on_ands(*b);
 
                 a_parts.append(&mut b_parts);
 
                 a_parts
             },
-            Proposition::Not(inner) => {
-                match *inner {
-                    Proposition::Term(a) => vec!(ClausePart::NegatedTerm(a)),
+            p => vec!(p)
+        }
+    }
+
+    fn from_or_not_prop(prop: &Proposition) -> Vec<ClausePart> {
+        match *prop {
+            Proposition::Or(ref a, ref b) => {
+                let mut a_parts = Clause::from_or_not_prop(&*a);
+                let mut b_parts = Clause::from_or_not_prop(&*b);
+
+                a_parts.append(&mut b_parts);
+
+                a_parts
+            },
+            Proposition::Not(ref inner) => {
+                match **inner {
+                    Proposition::Term(ref a) =>
+                        vec!(ClausePart::NegatedTerm(a.clone())),
                     _ => panic!("Proposition contained non-(or, not) term")
                 }
             },
-            Proposition::Term(a) => vec!(ClausePart::Term(a)),
+            Proposition::Term(ref a) => vec!(ClausePart::Term(a.clone())),
             _ => panic!("Proposition contained non-(or, not) term: {}", prop)
         }
     }
 }
 
+#[derive(Clone)]
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum ClausePart {
