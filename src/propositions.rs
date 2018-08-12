@@ -8,6 +8,8 @@ use std::fmt;
 ///
 /// let prop4 = resolution_prover::and(prop1, prop3);
 /// ```
+#[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Proposition {
     Or(Box<Proposition>, Box<Proposition>),
     And(Box<Proposition>, Box<Proposition>),
