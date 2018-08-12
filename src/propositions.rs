@@ -10,6 +10,7 @@ use std::fmt;
 /// ```
 #[derive(Debug)]
 #[derive(PartialEq)]
+#[derive(Clone)]
 pub enum Proposition {
     Or(Box<Proposition>, Box<Proposition>),
     And(Box<Proposition>, Box<Proposition>),
