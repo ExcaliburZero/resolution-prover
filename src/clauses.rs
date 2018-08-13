@@ -1,6 +1,9 @@
 use propositions::*;
 
+#[derive(Clone)]
 #[derive(Debug)]
+#[derive(Eq)]
+#[derive(Hash)]
 #[derive(PartialEq)]
 pub struct Clause {
     pub parts: Vec<ClausePart>
@@ -173,10 +176,21 @@ impl Clause {
 
 #[derive(Clone)]
 #[derive(Debug)]
+#[derive(Eq)]
+#[derive(Hash)]
 #[derive(PartialEq)]
 pub enum ClausePart {
     Term(String),
     NegatedTerm(String)
+}
+
+impl ClausePart {
+    pub fn negate(&self) -> ClausePart {
+        match self {
+            ClausePart::Term(a) => ClausePart::NegatedTerm(a.clone()),
+            ClausePart::NegatedTerm(a) => ClausePart::Term(a.clone())
+        }
+    }
 }
 
 #[cfg(test)]
