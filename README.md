@@ -28,7 +28,7 @@ In the example above (from *Artifical Intelligence*), we attempt to prove that `
 
 * `p`
 * `(p /\ q) -> r`
-* `(s /\ t) -> q`
+* `(s \/ t) -> q`
 * `t`
 
 The prover converts the assumptions into conjunctive normal form such that they become clauses, statements that consist of multiple terms or'd with one another, that are connected by ands. The conversion is done by performing the following transformations.
@@ -38,4 +38,40 @@ The prover converts the assumptions into conjunctive normal form such that they 
 * Bubbling up the ands to the highest levels of scoping, through applications of distribution of ands and ors `(p \/ (q /\ r)) :: ((p \/ q) /\ (p \/ r))`.
 * Splitting the statements on the ands into separate clauses, breaking up the resulting statements into their or'd parts to form the clauses.
 
+In this case, we end up with the following clauses formed from the assumptions.
+
+```
+p               |  p
+(p /\ q) -> r   |  ~p \/ ~q \/ r
+(s \/ t) -> q   |  ~s \/ q
+                |  ~t \/ q
+t               |  t
+```
+
 Once all of the assumptions have been converted into conjuctive normal form and into clauses, the prover negates the goal to prepare for a proof by contradiction. The idea is to see if introducing the negation of the goal causes a contradiction, and if so then it follows that the goal is provable from the assumptions.
+
+The prover will then convert the negated goal into conjunctive normal form and into clauses. Then it will select one of the formed clauses, adding the remaining negated goal clauses to the set of clauses formed by the assumptions.
+
+The prover will then repeated select a clause from the list of clauses and try to resolve it against the "current" clause, by combining their terms and removing any pairs of terms that are negations of one another (ex `p` and `~p`). This process is done until the "current" clause becomes empty, and thus the goal is provable, or no remaing clauses are left to choose from, and thus the attempt is unsuccessful.
+
+Backtracking is used to allow this process to work, taking into account bad choices for the negated goal clause to start with and the clauses chosen to resolve against the"current" clause. Additionally only clauses that could possibly resolve against the "current" clause are chosen, to prevent unecessary computation and backtracking.
+
+For example, in this case the prover will negate our goal `r` to get `~r`. The negated goal is then converted into clauses, in this case the only clause is `~r`. The prover will then look for a clause that can resolve with `~r`. It chooses `~p \/ ~q \/ r`, since it is the only other clause with an `r` term. The two clauses areresolved to form `~p \/ ~q`.
+
+The prover will then look for a clause that resolves with `~p`, finding `p` to resolve to `~q`. It will then look for a clause that resolves with `~q`, finding `~s \/ q` to resolve to `~s`. It will then look for a clause that resolves with `~s`, but be unable to find any, and thus begins to backtrack.
+
+It will then look for another clause that resolves with `~q`, finding `~t \/ q` to resolve to `~t`. It will then look for a clause that resolves with `~t`, finding `t` toresolve to the empty clause. Since the empty clause was reached, a contradiction was found and thus the goal statement must be provable.
+
+And indeed the following proof would yield the goal statement.
+
+```
+1) p
+2) (p /\ q) -> r
+3) (s \/ t) -> q
+4) t
+-----------------
+5) s \/ t         Addition     4
+6) q              Modus Ponens 3, 5
+7) p /\ q         Conjunction  1, 6
+8) r              Modus Ponens 2, 7
+```
