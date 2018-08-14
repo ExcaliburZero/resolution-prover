@@ -1,4 +1,4 @@
-# Resolution Prover
+# Resolution Prover [![Travis CI Status](https://api.travis-ci.org/ExcaliburZero/resolution-prover.svg)](https://travis-ci.org/ExcaliburZero/resolution-prover) [![Coverage Status](https://coveralls.io/repos/github/ExcaliburZero/resolution-prover/badge.svg?branch=master)](https://coveralls.io/github/ExcaliburZero/resolution-prover?branch=master)
 This is a resolution prover library for propositional logic that I wrote in Rust after reading some of *Artifical Intelligence* by Elain Rich.
 
 Given a set of assumptions and a proposition to prove using those assumptions, it will attempt a proof by contradiction by converting all of the propositions into conjuctive normal form and then resolving together clauses containing terms that are negations of one another.
