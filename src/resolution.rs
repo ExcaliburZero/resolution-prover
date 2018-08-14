@@ -22,10 +22,7 @@ pub fn resolve(assumptions: Vec<Proposition>, goal: Proposition) -> bool {
     let negated_goal = not(goal);
     let neg_goal_clauses = Clause::from_proposition(negated_goal);
 
-    println!("neg_goal_clauses: {:?}", neg_goal_clauses);
     for c in neg_goal_clauses {
-        println!("resolve: {:?}", c);
-
         let mut visited = HashSet::new();
         visited.insert(&c);
 
@@ -37,14 +34,9 @@ pub fn resolve(assumptions: Vec<Proposition>, goal: Proposition) -> bool {
 }
 
 fn resolve_(clauses: &ClauseStorage, current: &Clause, visited: HashSet<&Clause>) -> bool {
-    println!("[{}] @@resolve_: {:?}", visited.len(), current);
-    //println!("[{}] @@resolve_ clauses: {:?}", visited.len(), clauses);
     for p in current.parts.clone() {
-        println!("[{}] ==resolve_ p: {:?}", visited.len(), p);
         let matches = clauses.get(&p.negate(), &visited);
-        println!("[{}]   matches: {:?}", visited.len(), matches);
         for m in matches {
-            println!("[{}] ====resolve_ m: {:?}", visited.len(), m);
             let next = combine(current, m);
 
             if next.parts.len() == 0 {
@@ -57,11 +49,8 @@ fn resolve_(clauses: &ClauseStorage, current: &Clause, visited: HashSet<&Clause>
             if resolve_(clauses, &next, new_visited) {
                 return true
             }
-            println!("XX");
         }
-        println!("<==");
     }
-    println!("<====");
     false
 }
 
@@ -83,7 +72,6 @@ fn combine(a: &Clause, b: &Clause) -> Clause {
             }
         }
     }
-    println!("combine: {:?}", all_parts);
 
     Clause {
         parts: all_parts.iter()
@@ -107,7 +95,6 @@ impl ClauseStorage {
     }
 
     fn get(&self, part: &ClausePart, visited: &HashSet<&Clause>) -> Vec<&Clause> {
-        println!("get: {:?}\n{:?}\n{:?}", part, visited, self.lookup_table);
         match self.lookup_table.get_vec(part) {
             Some(indices) => {
                 indices.iter()
@@ -126,49 +113,6 @@ impl ClauseStorage {
             .for_each(|p| self.lookup_table.insert((*p).clone(), index));
 
         self.clauses.push(clause);
-    }
-}
-
-fn multimap_pop<'a, K, V>(multimap: &'a mut MultiMap<K, V>, key: &K) -> Option<V>
-    where K: Eq + Hash + Clone
-{
-    match multimap.remove(key) {
-        Some(mut values) => {
-            let ret = values.pop().unwrap();
-
-            values.into_iter()
-                .for_each(|v| multimap.insert(key.clone(), v));
-
-            Some(ret)
-        },
-        None => None
-    }
-}
-
-#[derive(Debug)]
-struct ClauseEntry {
-    clause: Clause,
-    valid: bool
-}
-
-impl ClauseEntry {
-    fn new(clause: Clause) -> ClauseEntry {
-        ClauseEntry {
-            clause,
-            valid: true
-        }
-    }
-
-    fn get(&self) -> Option<&Clause> {
-        if self.valid {
-            Some(&self.clause)
-        } else {
-            None
-        }
-    }
-
-    fn expire(&mut self) {
-        self.valid = false;
     }
 }
 
@@ -218,5 +162,24 @@ mod tests {
         let goal = term("r".to_string());
 
         assert_eq!(resolve(assumptions, goal), true);
+    }
+
+    #[test]
+    fn resolve_simple_false() {
+        let assumptions = vec!(
+            term("p".to_string()),
+            implies(
+                and(term("p".to_string()), term("q".to_string())),
+                term("r".to_string())
+            ),
+            implies(
+                or(term("s".to_string()), term("t".to_string())),
+                term("q".to_string())
+            )
+        );
+
+        let goal = term("r".to_string());
+
+        assert_eq!(resolve(assumptions, goal), false);
     }
 }
