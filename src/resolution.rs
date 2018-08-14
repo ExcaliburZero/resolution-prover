@@ -5,10 +5,7 @@ use propositions::*;
 
 use self::multimap::MultiMap;
 
-use std::collections::HashMap;
 use std::collections::HashSet;
-use std::hash::Hash;
-use std::iter::FromIterator;
 
 pub fn resolve(assumptions: Vec<Proposition>, goal: Proposition) -> bool {
     let assumption_clauses: Vec<Clause> = assumptions.iter()
@@ -118,7 +115,6 @@ impl ClauseStorage {
 
 #[cfg(test)]
 mod tests {
-    use clauses::*;
     use propositions::*;
     use resolution::*;
 
