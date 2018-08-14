@@ -60,7 +60,7 @@ For example, in this case the prover will negate our goal `r` to get `~r`. The n
 
 The prover will then look for a clause that resolves with `~p`, finding `p` to resolve to `~q`. It will then look for a clause that resolves with `~q`, finding `~s \/ q` to resolve to `~s`. It will then look for a clause that resolves with `~s`, but be unable to find any, and thus begins to backtrack.
 
-It will then look for another clause that resolves with `~q`, finding `~t \/ q` to resolve to `~t`. It will then look for a clause that resolves with `~t`, finding `t` toresolve to the empty clause. Since the empty clause was reached, a contradiction was found and thus the goal statement must be provable.
+It will then look for another clause that resolves with `~q`, finding `~t \/ q` to resolve to `~t`. It will then look for a clause that resolves with `~t`, finding `t` to resolve to the empty clause. Since the empty clause was reached, a contradiction was found and thus the goal statement must be provable.
 
 And indeed the following proof would yield the goal statement.
 
@@ -75,3 +75,6 @@ And indeed the following proof would yield the goal statement.
 7) p /\ q         Conjunction  1, 6
 8) r              Modus Ponens 2, 7
 ```
+
+## Licensing
+The source code is available under the [MIT License](https://opensource.org/licenses/MIT), see `LICENSE` for more information.
