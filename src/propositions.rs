@@ -65,7 +65,7 @@ impl fmt::Display for Proposition {
     ///
     /// let prop4 = resolution_prover::and(prop1, prop3);
     ///
-    /// let expected = String::from("hello /\\ ~hi");
+    /// let expected = String::from("hello /\\ ~(hi)");
     ///
     /// assert_eq!(format!("{}", prop4), expected);
     /// ```
