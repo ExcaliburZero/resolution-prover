@@ -19,11 +19,19 @@ pub fn resolve(assumptions: Vec<Proposition>, goal: Proposition) -> bool {
     let negated_goal = not(goal);
     let neg_goal_clauses = Clause::from_proposition(negated_goal);
 
-    for c in neg_goal_clauses {
+    for c in neg_goal_clauses.clone() {
+        let others: Vec<Clause> = neg_goal_clauses.clone().into_iter()
+            .filter(|v| *v != c)
+            .collect();
+
+        let mut all_clauses = clauses.clone();
+        others.into_iter()
+            .for_each(|c| all_clauses.put(c));
+
         let mut visited = HashSet::new();
         visited.insert(&c);
 
-        if resolve_(&clauses, &c, visited) {
+        if resolve_(&all_clauses, &c, visited) {
             return true
         }
     }
@@ -77,6 +85,7 @@ fn combine(a: &Clause, b: &Clause) -> Clause {
     }
 }
 
+#[derive(Clone)]
 #[derive(Debug)]
 struct ClauseStorage {
     lookup_table: MultiMap<ClausePart, usize>,
@@ -177,5 +186,17 @@ mod tests {
         let goal = term("r".to_string());
 
         assert_eq!(resolve(assumptions, goal), false);
+    }
+
+    #[test]
+    fn resolve_taut_or_not() {
+        let assumptions = vec!();
+
+        let goal = or(
+            term("p".to_string()),
+            not(term("p".to_string()))
+        );
+
+        assert_eq!(resolve(assumptions, goal), true);
     }
 }
