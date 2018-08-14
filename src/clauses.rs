@@ -78,8 +78,14 @@ impl Clause {
                     p => panic!("Unexpected implies or iff: {}", not(p))
                 }
             },
-            Proposition::Or(a, b) => or(*a, *b),
-            Proposition::And(a, b) => and(*a, *b),
+            Proposition::Or(a, b) => or(
+                Clause::reduce_negation(*a),
+                Clause::reduce_negation(*b)
+            ),
+            Proposition::And(a, b) => and(
+                Clause::reduce_negation(*a),
+                Clause::reduce_negation(*b)
+            ),
             Proposition::Term(a) => term(a),
             p => panic!("Unexpected implies or iff: {}", p)
         }
@@ -165,7 +171,7 @@ impl Clause {
                 match **inner {
                     Proposition::Term(ref a) =>
                         vec!(ClausePart::NegatedTerm(a.clone())),
-                    _ => panic!("Proposition contained non-(or, not) term")
+                    _ => panic!("Proposition contained non-(or, not) term: {}", prop)
                 }
             },
             Proposition::Term(ref a) => vec!(ClausePart::Term(a.clone())),
@@ -359,6 +365,50 @@ mod tests {
                 term("c".to_string())
             ),
         );
+
+        assert_eq!(Clause::reduce_negation(prop), expected);
+    }
+
+    #[test]
+    fn reduce_negation_nested_and_not_and() {
+        let prop = and(
+            not(and(
+                term("a".to_string()),
+                term("b".to_string())
+            )),
+            term("c".to_string())
+        );
+
+        let expected = and(
+            or(
+                not(term("a".to_string())),
+                not(term("b".to_string()))
+            ),
+            term("c".to_string())
+        );
+
+
+        assert_eq!(Clause::reduce_negation(prop), expected);
+    }
+
+    #[test]
+    fn reduce_negation_nested_or_not_and() {
+        let prop = or(
+            not(and(
+                term("a".to_string()),
+                term("b".to_string())
+            )),
+            term("c".to_string())
+        );
+
+        let expected = or(
+            or(
+                not(term("a".to_string())),
+                not(term("b".to_string()))
+            ),
+            term("c".to_string())
+        );
+
 
         assert_eq!(Clause::reduce_negation(prop), expected);
     }

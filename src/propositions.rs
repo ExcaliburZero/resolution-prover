@@ -83,7 +83,7 @@ impl fmt::Display for Proposition {
             Proposition::Iff(ref a, ref b) => {
                 write!(f, "{} <-> {}", a, b)
             },
-            Proposition::Not(ref a) => write!(f, "~{}", a),
+            Proposition::Not(ref a) => write!(f, "~({})", a),
             Proposition::Term(ref a) => write!(f, "{}", a),
         }
     }

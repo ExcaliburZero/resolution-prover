@@ -37,12 +37,14 @@ pub fn resolve(assumptions: Vec<Proposition>, goal: Proposition) -> bool {
 }
 
 fn resolve_(clauses: &ClauseStorage, current: &Clause, visited: HashSet<&Clause>) -> bool {
-    println!("resolve_: {:?}", current);
-    println!("resolve_ clauses: {:?}", clauses);
+    println!("[{}] @@resolve_: {:?}", visited.len(), current);
+    //println!("[{}] @@resolve_ clauses: {:?}", visited.len(), clauses);
     for p in current.parts.clone() {
-        println!("resolve_ p: {:?}", p);
-        for m in clauses.get(&p.negate(), &visited) {
-            println!("resolve_ m: {:?}", m);
+        println!("[{}] ==resolve_ p: {:?}", visited.len(), p);
+        let matches = clauses.get(&p.negate(), &visited);
+        println!("[{}]   matches: {:?}", visited.len(), matches);
+        for m in matches {
+            println!("[{}] ====resolve_ m: {:?}", visited.len(), m);
             let next = combine(current, m);
 
             if next.parts.len() == 0 {
@@ -55,8 +57,11 @@ fn resolve_(clauses: &ClauseStorage, current: &Clause, visited: HashSet<&Clause>
             if resolve_(clauses, &next, new_visited) {
                 return true
             }
+            println!("XX");
         }
+        println!("<==");
     }
+    println!("<====");
     false
 }
 
@@ -101,20 +106,16 @@ impl ClauseStorage {
         }
     }
 
-    fn get(&self, part: &ClausePart, visited: &HashSet<&Clause>) -> Option<&Clause> {
+    fn get(&self, part: &ClausePart, visited: &HashSet<&Clause>) -> Vec<&Clause> {
         println!("get: {:?}\n{:?}\n{:?}", part, visited, self.lookup_table);
         match self.lookup_table.get_vec(part) {
             Some(indices) => {
-                for i in indices {
-                    let value = &self.clauses[*i];
-
-                    if !visited.contains(&value) {
-                        return Some(&value)
-                    }
-                }
-                None
+                indices.iter()
+                    .map(|i| &self.clauses[*i])
+                    .filter(|v| !visited.contains(v))
+                    .collect()
             }
-            None => None
+            None => vec!()
         }
     }
 
@@ -178,12 +179,43 @@ mod tests {
     use resolution::*;
 
     #[test]
-    fn resolve_simple_true() {
+    fn resolve_trivial_false() {
+        let assumptions = vec!(
+            term("a".to_string())
+        );
+
+        let goal = not(term("a".to_string()));
+
+        assert_eq!(resolve(assumptions, goal), false);
+    }
+
+    #[test]
+    fn resolve_trivial_true() {
         let assumptions = vec!(
             term("a".to_string())
         );
 
         let goal = term("a".to_string());
+
+        assert_eq!(resolve(assumptions, goal), true);
+    }
+
+    #[test]
+    fn resolve_simple_true() {
+        let assumptions = vec!(
+            term("p".to_string()),
+            implies(
+                and(term("p".to_string()), term("q".to_string())),
+                term("r".to_string())
+            ),
+            implies(
+                or(term("s".to_string()), term("t".to_string())),
+                term("q".to_string())
+            ),
+            term("t".to_string())
+        );
+
+        let goal = term("r".to_string());
 
         assert_eq!(resolve(assumptions, goal), true);
     }
