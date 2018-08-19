@@ -7,6 +7,31 @@ use self::multimap::MultiMap;
 
 use std::collections::HashSet;
 
+/// Checks if the given goal proposition is provable via the given assumptions.
+///
+/// Uses a resolution algorithm to prove provability. Can incorrectly return
+/// false in some cases where the goal statement is a tautology.
+///
+/// ```
+/// use resolution_prover::*;
+///
+/// let assumptions = vec!(
+///     term("p".to_string()),
+///     implies(
+///         and(term("p".to_string()), term("q".to_string())),
+///         term("r".to_string())
+///     ),
+///     implies(
+///         or(term("s".to_string()), term("t".to_string())),
+///         term("q".to_string())
+///     ),
+///     term("t".to_string())
+/// );
+///
+/// let goal = term("r".to_string());
+///
+/// assert_eq!(resolve(assumptions, goal), true);
+/// ```
 pub fn resolve(assumptions: Vec<Proposition>, goal: Proposition) -> bool {
     let assumption_clauses: Vec<Clause> = assumptions.iter()
         .flat_map(|a| Clause::from_proposition(a.clone()))
