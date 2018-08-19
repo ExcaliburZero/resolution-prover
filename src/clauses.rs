@@ -189,6 +189,10 @@ impl Clause {
         }
     }
 
+    /// Splits the given proposition on its conjunctions.
+    ///
+    /// Assumes that the proposition has already had its conjunctions bubbled
+    /// up.
     fn split_on_ands(prop: Proposition) -> Vec<Proposition> {
         match prop {
             Proposition::And(a, b) => {
@@ -203,6 +207,11 @@ impl Clause {
         }
     }
 
+    /// Converts the given proposition into a set of clause parts by splitting
+    /// it on the disjunctions.
+    ///
+    /// Assumes that the proposition has been simplified to contain only
+    /// disjunctions, negations, and raw terms.
     fn from_or_not_prop(prop: &Proposition) -> Vec<ClausePart> {
         match *prop {
             Proposition::Or(ref a, ref b) => {
@@ -226,6 +235,15 @@ impl Clause {
     }
 }
 
+/// A term or negated term that is part of a clause.
+///
+/// For example, `p` and `~q` can be represented as the following.
+///
+/// ```
+/// let p = resolution_prover::ClausePart::Term("p".to_string());
+///
+/// let not_q = resolution_prover::ClausePart::NegatedTerm("q".to_string());
+/// ```
 #[derive(Clone)]
 #[derive(Debug)]
 #[derive(Eq)]
@@ -237,6 +255,22 @@ pub enum ClausePart {
 }
 
 impl ClausePart {
+    /// Returns the negated version of the clause part.
+    ///
+    /// ```
+    /// let clausePart = resolution_prover::ClausePart::Term("p".to_string());
+    ///
+    /// let neg = clausePart.negate();
+    ///
+    /// let expected_1 =
+    ///     resolution_prover::ClausePart::NegatedTerm("p".to_string());
+    ///
+    /// assert_eq!(neg, expected_1);
+    ///
+    /// let double_neg = neg.negate();
+    ///
+    /// assert_eq!(double_neg, clausePart);
+    /// ```
     pub fn negate(&self) -> ClausePart {
         match self {
             ClausePart::Term(a) => ClausePart::NegatedTerm(a.clone()),
