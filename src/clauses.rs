@@ -1,5 +1,19 @@
 use propositions::*;
 
+/// A proposition made up of the disjunction of possibly negated terms.
+///
+/// For example the proposition `p \/ ~q \/ r` would be represetnted as the
+/// following.
+///
+/// ```
+/// let clause = resolution_prover::Clause {
+///     parts: vec!(
+///         resolution_prover::ClausePart::Term("p".to_string()),
+///         resolution_prover::ClausePart::NegatedTerm("q".to_string()),
+///         resolution_prover::ClausePart::Term("r".to_string())
+///     )
+/// };
+/// ```
 #[derive(Clone)]
 #[derive(Debug)]
 #[derive(Eq)]
@@ -10,6 +24,9 @@ pub struct Clause {
 }
 
 impl Clause {
+    /// Converts the given proposition into the corresponding clauses. Note
+    /// that one proposition could break down into one or more clauses.
+    ///
     /// ```
     /// let prop1 = resolution_prover::term("hello".to_string());
     ///
@@ -32,6 +49,12 @@ impl Clause {
             .collect()
     }
 
+    /// Breaks down the given proposition into the parts of the equivalent
+    /// clauses.
+    ///
+    /// In the returned value, the first level of `Vec` represents the
+    /// different clauses, and the second level of `Vec` represents the parts
+    /// of that specific clause.
     fn break_into_clauses(prop: Proposition) -> Vec<Vec<ClausePart>> {
         let no_implication = Clause::eliminate_implication(prop);
         let red_negations = Clause::reduce_negation(no_implication);
@@ -43,6 +66,13 @@ impl Clause {
             .collect()
     }
 
+    /// Converts the given proposition to an equivalent proposition that does
+    /// not use any instances of implication or biconditional.
+    ///
+    /// The conversions are done by breaking biconditionals into the and of
+    /// the implication in each direction, and then converting the implications
+    /// into the disjunction of the negation of the antecedent and the
+    /// consequent.
     fn eliminate_implication(prop: Proposition) -> Proposition {
         match prop {
             Proposition::Implies(a, b) => {
@@ -60,6 +90,17 @@ impl Clause {
         }
     }
 
+    /// Reduces the score of the negation in the given proposition, moving the
+    /// negation inwards as far as possible.
+    ///
+    /// The conversion is done by eliminating double negations and using
+    /// deMorgan's law.
+    ///
+    /// # Panics
+    ///
+    /// This function assumes that all implications and biconditionals have
+    /// already been removed from the proposition, and will panic upon finding
+    /// any.
     fn reduce_negation(prop: Proposition) -> Proposition {
         match prop {
             Proposition::Not(a) => {
@@ -91,6 +132,11 @@ impl Clause {
         }
     }
 
+    /// Bubbles up the conjunctions in the given proposition so that the
+    /// proposition becomes the conjunctions of terms and disjunctions.
+    ///
+    /// This conversion is done by using the distributed property of
+    /// conujunctions and disjunctions.
     fn bubble_up_ands(prop: Proposition) -> Proposition {
         match Clause::bubble_up_ands_(prop, false) {
             (p, _) => p
